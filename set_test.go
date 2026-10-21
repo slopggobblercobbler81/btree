@@ -321,3 +321,46 @@ func TestSetCopy(t *testing.T) {
 		panic("!")
 	}
 }
+
+func TestSetIterPrevBeyondStartAfterNextPastEnd(t *testing.T) {
+	var s Set[int]
+
+	s.Insert(1)
+	s.Insert(2)
+	s.Insert(3)
+
+	iterator := s.Iter()
+
+	if !iterator.Last() {
+		t.Fatal("expected true")
+	}
+
+	if iterator.Next() {
+		t.Fatal("expected false")
+	}
+
+	if !iterator.Prev() {
+		t.Fatal("expected true")
+	}
+	if iterator.Key() != 2 {
+		t.Fatalf("expected 2, got %v", iterator.Key())
+	}
+
+	if !iterator.Prev() {
+		t.Fatal("expected true")
+	}
+	if iterator.Key() != 1 {
+		t.Fatalf("expected 1, got %v", iterator.Key())
+	}
+
+	if iterator.Prev() {
+		t.Fatal("expected false")
+	}
+
+	// Repeated Prev calls beyond the start should always return false
+	for i := 0; i < 5; i++ {
+		if iterator.Prev() {
+			t.Fatalf("expected false on Prev beyond start (iteration %d), got true with key %v", i, iterator.Key())
+		}
+	}
+}

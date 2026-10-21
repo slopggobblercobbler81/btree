@@ -933,6 +933,8 @@ func (iter *MapIter[K, V]) Seek(key K) bool {
 	if iter.tr == nil {
 		return false
 	}
+	iter.atend = false
+	iter.atstart = false
 	iter.seeked = true
 	iter.stack = iter.stack[:0]
 	if iter.tr.root == nil {
@@ -986,6 +988,8 @@ func (iter *MapIter[K, V]) Last() bool {
 	if iter.tr == nil {
 		return false
 	}
+	iter.atend = false
+	iter.atstart = false
 	iter.seeked = true
 	iter.stack = iter.stack[:0]
 	if iter.tr.root == nil {
@@ -1017,6 +1021,7 @@ func (iter *MapIter[K, V]) Next() bool {
 	}
 	if len(iter.stack) == 0 {
 		if iter.atstart {
+			iter.atstart = false
 			return iter.First() && iter.Next()
 		}
 		return false
@@ -1029,6 +1034,7 @@ func (iter *MapIter[K, V]) Next() bool {
 				iter.stack = iter.stack[:len(iter.stack)-1]
 				if len(iter.stack) == 0 {
 					iter.atend = true
+					iter.atstart = false
 					return false
 				}
 				s = &iter.stack[len(iter.stack)-1]
@@ -1064,6 +1070,7 @@ func (iter *MapIter[K, V]) Prev() bool {
 	}
 	if len(iter.stack) == 0 {
 		if iter.atend {
+			iter.atend = false
 			return iter.Last() && iter.Prev()
 		}
 		return false
@@ -1076,6 +1083,7 @@ func (iter *MapIter[K, V]) Prev() bool {
 				iter.stack = iter.stack[:len(iter.stack)-1]
 				if len(iter.stack) == 0 {
 					iter.atstart = true
+					iter.atend = false
 					return false
 				}
 				s = &iter.stack[len(iter.stack)-1]

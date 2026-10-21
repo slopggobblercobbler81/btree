@@ -1982,3 +1982,95 @@ func TestBenchmarkIteratorReuseWorks(t *testing.T) {
 		reusableIter.Release()
 	}
 }
+
+func TestIterPrevBeyondStartAfterNextPastEnd(t *testing.T) {
+	tree := NewBTreeG(func(a, b int) bool {
+		return a < b
+	})
+
+	tree.Set(1)
+	tree.Set(2)
+	tree.Set(3)
+
+	iterator := tree.Iter()
+	defer iterator.Release()
+
+	if !iterator.Last() {
+		t.Fatal("expected true")
+	}
+
+	if iterator.Next() {
+		t.Fatal("expected false")
+	}
+
+	if !iterator.Prev() {
+		t.Fatal("expected true")
+	}
+	if iterator.Item() != 2 {
+		t.Fatalf("expected 2, got %v", iterator.Item())
+	}
+
+	if !iterator.Prev() {
+		t.Fatal("expected true")
+	}
+	if iterator.Item() != 1 {
+		t.Fatalf("expected 1, got %v", iterator.Item())
+	}
+
+	if iterator.Prev() {
+		t.Fatal("expected false")
+	}
+
+	// Repeated Prev calls beyond the start should always return false
+	for i := 0; i < 5; i++ {
+		if iterator.Prev() {
+			t.Fatalf("expected false on Prev beyond start (iteration %d), got true with item %v", i, iterator.Item())
+		}
+	}
+}
+
+func TestIterNextBeyondEndAfterPrevPastStart(t *testing.T) {
+	tree := NewBTreeG(func(a, b int) bool {
+		return a < b
+	})
+
+	tree.Set(1)
+	tree.Set(2)
+	tree.Set(3)
+
+	iterator := tree.Iter()
+	defer iterator.Release()
+
+	if !iterator.First() {
+		t.Fatal("expected true")
+	}
+
+	if iterator.Prev() {
+		t.Fatal("expected false")
+	}
+
+	if !iterator.Next() {
+		t.Fatal("expected true")
+	}
+	if iterator.Item() != 2 {
+		t.Fatalf("expected 2, got %v", iterator.Item())
+	}
+
+	if !iterator.Next() {
+		t.Fatal("expected true")
+	}
+	if iterator.Item() != 3 {
+		t.Fatalf("expected 3, got %v", iterator.Item())
+	}
+
+	if iterator.Next() {
+		t.Fatal("expected false")
+	}
+
+	// Repeated Next calls beyond the end should always return false
+	for i := 0; i < 5; i++ {
+		if iterator.Next() {
+			t.Fatalf("expected false on Next beyond end (iteration %d), got true with item %v", i, iterator.Item())
+		}
+	}
+}
